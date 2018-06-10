@@ -1,0 +1,99 @@
+options {
+   STATIC = false;
+}
+PARSER_BEGIN(Parser)
+import java.io.*;
+import java.awt.event.*;
+class Parser {
+      private ActionListener listener;
+      public void setActionListener(ActionListener a){
+          listener = a;
+      }
+      private void output(double value){
+          listener.actionPerformed(
+               new ActionEvent(this,
+                               ActionEvent.ACTION_PERFORMED,
+                               String.valueOf(value)));
+      }
+}
+PARSER_END(Parser)
+SKIP : {
+    " " | "\n" | "\r" 
+}
+TOKEN : {
+    <PLUSOP : "+" > 
+ |  <MINUSOP : "-" >
+ |  <MULOP : "*" >
+ |  <DIVOP : "/" >
+ |  <MINUSNUM : "_">
+ |  <OPEN : "(" > 
+ |  <CLOSE : ")" >
+ |  <EQOP : "=" >
+ |  <#DOT : "." >
+ |  <NUM : ("0"|["1"-"9"](["0"-"9"])*)(<DOT>(["0"-"9"])+)?> 
+}
+public void start() :
+{
+    double num;
+}
+{
+    num = Keisan2() <EQOP> { 
+            output(num);
+    }
+}
+double Keisan2(): {
+    double num1;
+    double num2;
+}
+{
+    num1 = Keisan1() (
+		<PLUSOP> num2 = Keisan1() {
+			num1 += num2;
+		}
+		| <MINUSOP> num2 = Keisan1() {
+			num1 -= num2;
+		}
+	)* {
+		return num1;
+	}
+}
+double Keisan1(): {
+    double num1;
+    double num2;
+}
+{
+	num1 = Mass() (
+		<MULOP> num2 = Mass() {
+			num1 *= num2;
+		}
+		| <DIVOP> num2 = Mass() {
+			num1 /= num2;
+		}
+        )* {
+		return num1;
+	}
+}
+double Mass() : {
+}
+{        
+        <OPEN> { 
+            return Keisan2(); 
+        } <CLOSE>
+        | {
+            return Num();
+        }
+}
+double Num(): {
+	Token token;
+}
+{
+        token = <NUM> {
+                output(Double.parseDouble(token.image));
+                return Double.parseDouble(token.image);
+        }
+        | <MINUSNUM>
+        token = <NUM> {
+                output(Double.parseDouble(token.image));
+                return -1.0 * Double.parseDouble(token.image);
+        }
+}
